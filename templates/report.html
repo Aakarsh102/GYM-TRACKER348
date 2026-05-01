@@ -53,6 +53,23 @@
             </ul>
         </div>
         
+        {% if stats.exercise_stats %}
+        <div class="card" style="background: #f0fdf4; border-left: 4px solid #16a34a;">
+            <h3>🏋️‍♂️ Per-Exercise Breakdown</h3>
+            <ul style="list-style-type: none; padding-left: 0;">
+                {% for ex_name, data in stats.exercise_stats.items() %}
+                <li style="margin-bottom: 0.5rem; font-size: 1.1rem;">
+                    <strong>{{ ex_name }}:</strong> 
+                    {{ data.total_sets }} total sets 
+                    {% if data.avg_weight > 0 %}
+                    <span style="color: #4b5563;">| Average Weight: {{ "%.2f"|format(data.avg_weight) }} lbs</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
         <div class="card">
             <h3>Detailed Logs</h3>
             <table>

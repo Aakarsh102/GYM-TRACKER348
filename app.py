@@ -5,6 +5,7 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gym.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'isolation_level': 'SERIALIZABLE'}
 app.config['SECRET_KEY'] = 'dev-secret-key'
 
 db.init_app(app)
@@ -18,7 +19,7 @@ with app.app_context():
         db.session.commit()
     if not WorkoutCategory.query.first():
         c1 = WorkoutCategory(name="Strength")
-        c2 = WorkoutCategory(name="Hypertrophy")
+        c2 = WorkoutCategory(name="Endurance")
         db.session.add_all([c1, c2])
         db.session.commit()
         e1 = Exercise(name="Bench Press", category_id=c1.id)
@@ -135,9 +136,25 @@ def report():
         
         if results:
             stats['total_logs'] = len(results)
-            stats['avg_weight'] = sum(r.weight for r in results if r.weight) / len(results)
-            stats['max_weight'] = max((r.weight for r in results if r.weight), default=0)
+            
+            valid_weights = [r.weight for r in results if r.weight and r.weight > 0]
+            stats['avg_weight'] = sum(valid_weights) / len(valid_weights) if valid_weights else 0.0
+            stats['max_weight'] = max(valid_weights, default=0.0)
+            
             stats['total_workouts'] = len(set(r.workout_session_id for r in results))
+            
+            exercise_stats = {}
+            for r in results:
+                ex_name = r.exercise.name
+                if ex_name not in exercise_stats:
+                    exercise_stats[ex_name] = {'total_sets': 0, 'weights': []}
+                exercise_stats[ex_name]['total_sets'] += r.sets
+                if r.weight and r.weight > 0:
+                    exercise_stats[ex_name]['weights'].append(r.weight)
+            
+            for ex, data in exercise_stats.items():
+                data['avg_weight'] = sum(data['weights']) / len(data['weights']) if data['weights'] else 0.0
+            stats['exercise_stats'] = exercise_stats
             
     return render_template("report.html", categories=categories, exercises=exercises, results=results, stats=stats)
 
@@ -156,6 +173,16 @@ def manage_exercises():
     categories = WorkoutCategory.query.all()
     exercises = Exercise.query.join(WorkoutCategory).order_by(WorkoutCategory.name, Exercise.name).all()
     return render_template("exercises.html", categories=categories, exercises=exercises)
+
+@app.route("/exercises/<int:id>/delete", methods=["POST"])
+def delete_exercise(id):
+    exercise = Exercise.query.get_or_404(id)
+    # Cascade delete any workout records that reference this exercise
+    WorkoutExercise.query.filter_by(exercise_id=exercise.id).delete()
+    db.session.delete(exercise)
+    db.session.commit()
+    flash(f"Exercise '{exercise.name}' deleted successfully.", "info")
+    return redirect(url_for('manage_exercises'))
 
 @app.route("/workout_exercises/<int:we_id>/edit", methods=["GET", "POST"])
 def edit_workout_exercise(we_id):

@@ -34,6 +34,7 @@
             <tr>
                 <th>Category</th>
                 <th>Exercise Name</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -43,6 +44,11 @@
                         style="pointer-events: none; padding: 0.2rem 0.5rem; font-size: 0.8rem; border-radius: 4px;">{{
                         ex.category.name }}</span></td>
                 <td><strong>{{ ex.name }}</strong></td>
+                <td>
+                    <form action="{{ url_for('delete_exercise', id=ex.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this exercise? This will remove it from all past workouts as well.');">Delete</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

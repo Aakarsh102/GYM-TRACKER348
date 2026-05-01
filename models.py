@@ -33,7 +33,7 @@ class WorkoutSession(db.Model):
     date = db.Column(db.Date, nullable=False, default=datetime.utcnow, index=True)
     duration_minutes = db.Column(db.Integer)
     notes = db.Column(db.Text)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     # Relationships
     exercises = db.relationship('WorkoutExercise', backref='session', lazy=True, cascade='all, delete-orphan')
