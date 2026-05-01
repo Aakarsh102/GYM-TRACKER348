@@ -16,8 +16,10 @@ A simple web application built with Python, Flask, and SQLAlchemy to track your 
    cd GYM-TRACKER348
    ```
 
-2. **Activate the Virtual Environment:**
+2. **Create and Activate the Virtual Environment:**
+   If you don't have a virtual environment set up, create one first:
    ```bash
+   python3 -m venv venv
    source venv/bin/activate
    ```
 
